@@ -11,7 +11,26 @@ export class CartService {
   totalPrice: Subject<number> = new BehaviorSubject<number>(0);
   totalQuantity: Subject<number> = new BehaviorSubject<number>(0);
 
-  constructor() {}
+  constructor() {
+    this.loadCartItems();
+  }
+
+  private loadCartItems() {
+    try {
+      const storage = sessionStorage;
+      if (storage) {
+        const storedItems = storage.getItem('cartItems');
+        if (storedItems) {
+          this.cartItems = JSON.parse(storedItems);
+          this.computeCartTotals();
+        }
+      } else {
+        console.log('Web Storage is not supported in this environment.');
+      }
+    } catch (error) {
+      console.error('An error occurred while loading cart items:', error);
+    }
+  }
 
   addToCart(cartItem: CartItem) {
     let alreadyExistInCart: boolean = false;
@@ -46,6 +65,16 @@ export class CartService {
     this.totalQuantity.next(totalQuantityValue);
 
     this.logCartData(totalPriceValue, totalQuantityValue);
+    this.persistCartItems();
+  }
+
+  persistCartItems() {
+    const storage = sessionStorage;
+    if (storage) {
+      storage.setItem('cartItems', JSON.stringify(this.cartItems));
+    } else {
+      console.log('Web Storage is not supported in this environment.');
+    }
   }
 
   logCartData(totalPrice: number, totalQuantityValue: number) {
